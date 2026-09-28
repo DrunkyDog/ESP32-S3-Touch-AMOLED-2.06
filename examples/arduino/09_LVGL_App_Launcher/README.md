@@ -31,8 +31,8 @@ Each module lives in its own folder under `src/` and carries its own version in 
 | --- | --- | --- | --- |
 | nvs | 0x9000 | 20 KB | Settings, Wi-Fi, server URL, installed data versions (shared with AI Voice) |
 | otadata | 0xE000 | 8 KB | Active app slot and rollback state |
-| app0 / app1 | 0x10000 / 0x210000 | 2 MB each | Launcher A/B firmware slots |
-| voice0 / voice1 | 0x410000 / 0x790000 | 3.5 MB each | AI Voice (xiaozhi) A/B firmware slots |
+| app0 / app1 | 0x10000 / 0x250000 | 2.25 MB each | Launcher A/B firmware slots |
+| voice0 / voice1 | 0x490000 / 0x7D0000 | 3.25 MB each | AI Voice (xiaozhi) A/B firmware slots |
 | assets | 0xB10000 | 3 MB | AI Voice fonts, wake word and emoji |
 | board, protocol, server | 0xE10000, 0xE20000, 0xE30000 | 64 KB each | Module data |
 | audio, components | 0xE40000, 0xF00000 | 256 KB each | Module data |

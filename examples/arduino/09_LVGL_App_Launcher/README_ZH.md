@@ -31,8 +31,8 @@
 | --- | --- | --- | --- |
 | nvs | 0x9000 | 20 KB | 设置、Wi-Fi、服务器地址、已安装数据版本（与 AI 语音共用） |
 | otadata | 0xE000 | 8 KB | 当前应用槽与回滚状态 |
-| app0 / app1 | 0x10000 / 0x210000 | 各 2 MB | 启动器 A/B 固件槽 |
-| voice0 / voice1 | 0x410000 / 0x790000 | 各 3.5 MB | AI 语音（xiaozhi）A/B 固件槽 |
+| app0 / app1 | 0x10000 / 0x250000 | 各 2.25 MB | 启动器 A/B 固件槽 |
+| voice0 / voice1 | 0x490000 / 0x7D0000 | 各 3.25 MB | AI 语音（xiaozhi）A/B 固件槽 |
 | assets | 0xB10000 | 3 MB | AI 语音字体、唤醒词与表情 |
 | board、protocol、server | 0xE10000、0xE20000、0xE30000 | 各 64 KB | 模块数据 |
 | audio、components | 0xE40000、0xF00000 | 各 256 KB | 模块数据 |
