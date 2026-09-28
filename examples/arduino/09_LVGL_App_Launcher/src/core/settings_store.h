@@ -16,6 +16,7 @@ struct AppSettings {
   char tz_name[40];        // IANA name, e.g. "Asia/Bangkok"
   char location[32];       // free text shown on the watch face
   bool low_battery_mode;
+  uint8_t watch_style;     // watch face phrase set, cycled by tapping the watch face
   char wifi_ssid[33];
   char wifi_pass[65];      // stored in NVS as plain text (NVS encryption is not enabled)
 };

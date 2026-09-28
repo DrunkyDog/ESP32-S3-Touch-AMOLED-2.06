@@ -131,11 +131,17 @@ static void create_icon(lv_obj_t *page, int id) {
   lv_obj_set_style_height(icon, LAUNCHER_ICON_SIZE - 10, LV_STATE_PRESSED);
   lv_obj_add_event_cb(icon, on_icon_clicked, LV_EVENT_CLICKED, (void *)(intptr_t)id);
 
-  lv_obj_t *symbol = lv_label_create(icon);
-  lv_label_set_text(symbol, app->symbol);
-  lv_obj_set_style_text_font(symbol, &lv_font_montserrat_48, 0);
-  lv_obj_set_style_text_color(symbol, lv_color_white(), 0);
-  lv_obj_center(symbol);
+  if (app->image != nullptr) {
+    lv_obj_t *img = lv_image_create(icon);
+    lv_image_set_src(img, app->image);
+    lv_obj_center(img);
+  } else {
+    lv_obj_t *symbol = lv_label_create(icon);
+    lv_label_set_text(symbol, app->symbol);
+    lv_obj_set_style_text_font(symbol, &lv_font_montserrat_48, 0);
+    lv_obj_set_style_text_color(symbol, lv_color_white(), 0);
+    lv_obj_center(symbol);
+  }
 
   ui_label(cell, app->name, &lv_font_montserrat_20, g_ui.text);
 }
@@ -321,6 +327,19 @@ void launcher_close_app(void) {
   s_app_screen = nullptr;
   // auto_del=true: the app screen is deleted once the animation finishes
   lv_screen_load_anim(s_screen, LV_SCR_LOAD_ANIM_MOVE_RIGHT, 200, 0, true);
+}
+
+bool launcher_go_home(void) {
+  bool changed = false;
+  if (s_active_app >= 0) {
+    launcher_close_app();
+    changed = true;
+  }
+  if (s_current_page != 0) {
+    launcher_scroll_to_page(0);
+    changed = true;
+  }
+  return changed;
 }
 
 void launcher_rebuild(void) {

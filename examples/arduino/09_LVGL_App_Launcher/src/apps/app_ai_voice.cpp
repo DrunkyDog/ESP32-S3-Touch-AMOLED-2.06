@@ -1,13 +1,15 @@
 #include "../core/app_switch.h"
 #include "../components/ui_theme.h"
 #include "../apps/apps.h"
+#include "ai_voice_icon.h"
 
 // AI Voice runs as a separate firmware (xiaozhi-esp32) in the voice0/voice1 app slots.
-// This app shows its status and hands the device over to it; holding BOOT inside
-// AI Voice switches back to the Launcher.
+// This app shows its status and hands the device over to it; pressing PWR (or holding
+// BOOT) inside AI Voice switches back to the Launcher.
 
-#define AI_VOICE_COLOR_TOP 0x5E5CE6
-#define AI_VOICE_COLOR_BOTTOM 0xBF5AF2
+// Same orange as the watch face time, fading to red
+#define AI_VOICE_COLOR_TOP 0xFF9F45
+#define AI_VOICE_COLOR_BOTTOM 0xFF3B30
 #define AI_VOICE_ORB 168
 
 static lv_obj_t *s_overlay = nullptr;
@@ -58,8 +60,9 @@ static lv_obj_t *create_orb(lv_obj_t *parent) {
   lv_obj_set_style_border_opa(orb, LV_OPA_20, 0);
   lv_obj_center(orb);
 
-  lv_obj_t *mic = ui_label(orb, LV_SYMBOL_AUDIO, &lv_font_montserrat_48, lv_color_white());
-  lv_obj_center(mic);
+  lv_obj_t *logo = lv_image_create(orb);
+  lv_image_set_src(logo, &ai_voice_icon_96);
+  lv_obj_center(logo);
   return stage;
 }
 
@@ -115,7 +118,7 @@ static void ai_voice_create(lv_obj_t *body, bool restore) {
   } else {
     add_info_row(card, LV_SYMBOL_WARNING, "Firmware", "Not installed", g_ui.danger);
   }
-  add_info_row(card, LV_SYMBOL_LEFT, "Return", "Hold BOOT", g_ui.text);
+  add_info_row(card, LV_SYMBOL_LEFT, "Return", "Press PWR", g_ui.text);
 
   lv_obj_t *open = ui_button(body, LV_SYMBOL_PLAY "  Open AI Voice", on_open_clicked, nullptr);
   lv_obj_set_size(open, lv_pct(100), 60);
@@ -163,4 +166,5 @@ const LauncherApp APP_AI_VOICE = {
   AI_VOICE_COLOR_BOTTOM,
   ai_voice_create,
   ai_voice_close,
+  &ai_voice_icon_64,
 };

@@ -20,6 +20,7 @@ void settings_load(void) {
   copy_str(g_settings.tz_name, sizeof(g_settings.tz_name), prefs.getString("tz", "Asia/Bangkok"));
   copy_str(g_settings.location, sizeof(g_settings.location), prefs.getString("loc", "Bangkok"));
   g_settings.low_battery_mode = prefs.getBool("lowbat", false);
+  g_settings.watch_style = prefs.getUChar("wstyle", 0);
   copy_str(g_settings.wifi_ssid, sizeof(g_settings.wifi_ssid), prefs.getString("ssid", ""));
   copy_str(g_settings.wifi_pass, sizeof(g_settings.wifi_pass), prefs.getString("pass", ""));
 
@@ -47,6 +48,7 @@ void settings_save(void) {
   prefs.putString("tz", g_settings.tz_name);
   prefs.putString("loc", g_settings.location);
   prefs.putBool("lowbat", g_settings.low_battery_mode);
+  prefs.putUChar("wstyle", g_settings.watch_style);
   prefs.putString("ssid", g_settings.wifi_ssid);
   prefs.putString("pass", g_settings.wifi_pass);
 

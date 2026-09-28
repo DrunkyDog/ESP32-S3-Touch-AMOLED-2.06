@@ -16,6 +16,8 @@ struct LauncherApp {
   void (*on_create)(lv_obj_t *body, bool restore);
   // Release timers/resources before the app screen is deleted
   void (*on_close)(void);
+  // Optional image shown instead of symbol (white-on-transparent, <= 64 px); nullptr = use symbol
+  const lv_image_dsc_t *image;
 };
 
 bool launcher_begin(void);
@@ -23,6 +25,8 @@ int launcher_install(const LauncherApp *app);  // returns app id, -1 on failure
 bool launcher_start_app(int id);
 void launcher_close_app(void);
 bool launcher_scroll_to_page(int index);
+// Close any open app and show the watch face page. Returns false if it was already showing.
+bool launcher_go_home(void);
 
 // Recreate every screen with the current theme (keeps the page / open app)
 void launcher_rebuild(void);

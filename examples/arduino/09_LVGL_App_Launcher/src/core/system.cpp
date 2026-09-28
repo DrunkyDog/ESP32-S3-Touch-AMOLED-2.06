@@ -103,11 +103,15 @@ static void power_tick(void) {
     s_policy = policy;
   }
 
+  // PWR short press: wake up / back to the watch face; on the watch face it turns the screen off
   if (board_power_key_pressed()) {
     if (board_display_is_sleeping()) {
       board_display_wake();
+      launcher_go_home();
       lv_display_trigger_activity(NULL);
       lv_obj_invalidate(lv_screen_active());
+    } else if (launcher_go_home()) {
+      lv_display_trigger_activity(NULL);
     } else {
       board_display_sleep();
     }

@@ -773,4 +773,5 @@ const LauncherApp APP_SETTINGS = {
   0x3A3A3C,
   settings_create,
   settings_close,
+  nullptr,
 };
