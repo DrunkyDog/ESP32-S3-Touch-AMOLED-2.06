@@ -433,7 +433,7 @@ static void build_battery(void) {
     lv_obj_add_state(sw, LV_STATE_CHECKED);
   }
   lv_obj_add_event_cb(sw, on_low_battery_changed, LV_EVENT_VALUE_CHANGED, nullptr);
-  lv_obj_t *hint = ui_label(card, "Reduces brightness and sleeps sooner when the battery is low.",
+  lv_obj_t *hint = ui_label(card, "On battery only. At 40% or less: brightness up to 40%, screen off within 30 s. At 20% or less: brightness up to 15%, screen off after 15 s.",
                             &lv_font_montserrat_16, g_ui.muted);
   lv_obj_set_width(hint, lv_pct(100));
   lv_label_set_long_mode(hint, LV_LABEL_LONG_WRAP);

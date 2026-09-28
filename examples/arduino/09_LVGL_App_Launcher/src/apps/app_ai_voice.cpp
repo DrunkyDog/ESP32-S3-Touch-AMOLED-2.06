@@ -4,8 +4,8 @@
 #include "ai_voice_icon.h"
 
 // AI Voice runs as a separate firmware (xiaozhi-esp32) in the voice0/voice1 app slots.
-// This app shows its status and hands the device over to it; pressing PWR (or holding
-// BOOT) inside AI Voice switches back to the Launcher.
+// This app shows its status and hands the device over to it; pressing PWR inside AI Voice
+// switches back to the Launcher (holding BOOT there opens its LAN update page).
 
 // Same orange as the watch face time, fading to red
 #define AI_VOICE_COLOR_TOP 0xFF9F45

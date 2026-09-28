@@ -40,8 +40,8 @@ Each module lives in its own folder under `src/` and carries its own version in 
 | storage | 0xFC0000 | 192 KB | FAT for user files |
 | coredump | 0xFF0000 | 64 KB | Crash dumps |
 
-The AI Voice app switches the boot slot to voice0/voice1 and restarts. Holding BOOT inside
-AI Voice returns to the Launcher. The Launcher OTA and rollback only use app0/app1.
+The AI Voice app switches the boot slot to voice0/voice1 and restarts. Pressing PWR inside
+AI Voice returns to the Launcher (holding BOOT there opens its LAN update page). The Launcher OTA and rollback only use app0/app1.
 
 All code modules are linked into one app image, so a firmware OTA replaces them together.
 The per-module versions in the manifest show which modules changed. Module data partitions

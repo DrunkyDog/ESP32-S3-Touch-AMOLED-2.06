@@ -1,5 +1,10 @@
+#include <string.h>
 #include "modules.h"
 #include "app_switch.h"
+
+// The AI Voice slots can also hold other images (e.g. a rejected LAN upload or staged assets);
+// only boot images that identify as the xiaozhi firmware.
+#define AI_VOICE_PROJECT_NAME "xiaozhi"
 
 static bool is_ota_slot(const esp_partition_t *p) {
   return p != nullptr && p->type == ESP_PARTITION_TYPE_APP && p->subtype >= ESP_PARTITION_SUBTYPE_APP_OTA_MIN &&
@@ -18,7 +23,7 @@ const esp_partition_t *app_switch_pair_partner(const esp_partition_t *app) {
 
 // Prefers images that were not rolled back, then the newer version
 static const esp_partition_t *pick_newest(esp_partition_subtype_t a, esp_partition_subtype_t b,
-                                          esp_app_desc_t *desc_out) {
+                                          const char *project, esp_app_desc_t *desc_out) {
   const esp_partition_t *best = nullptr;
   esp_app_desc_t best_desc = {};
   bool best_healthy = false;
@@ -28,6 +33,9 @@ static const esp_partition_t *pick_newest(esp_partition_subtype_t a, esp_partiti
     esp_app_desc_t desc;
     if (p == nullptr || esp_ota_get_partition_description(p, &desc) != ESP_OK) {
       continue;  // missing or empty slot
+    }
+    if (project != nullptr && strncmp(desc.project_name, project, sizeof(desc.project_name)) != 0) {
+      continue;  // some other firmware
     }
     esp_ota_img_states_t state;
     bool healthy = !(esp_ota_get_state_partition(p, &state) == ESP_OK &&
@@ -47,7 +55,7 @@ static const esp_partition_t *pick_newest(esp_partition_subtype_t a, esp_partiti
 }
 
 const esp_partition_t *app_switch_find_ai_voice(esp_app_desc_t *desc_out) {
-  return pick_newest(ESP_PARTITION_SUBTYPE_APP_OTA_2, ESP_PARTITION_SUBTYPE_APP_OTA_3, desc_out);
+  return pick_newest(ESP_PARTITION_SUBTYPE_APP_OTA_2, ESP_PARTITION_SUBTYPE_APP_OTA_3, AI_VOICE_PROJECT_NAME, desc_out);
 }
 
 bool app_switch_select_ai_voice(void) {
