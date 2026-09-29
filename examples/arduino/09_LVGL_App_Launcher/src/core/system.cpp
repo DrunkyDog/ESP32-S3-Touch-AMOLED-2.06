@@ -17,6 +17,7 @@
 #include "power_policy.h"
 #include "modules.h"
 #include "ota.h"
+#include "wrist_gesture.h"
 #include "system.h"
 
 HWCDC USBSerial;
@@ -26,6 +27,37 @@ static uint16_t *frame_buf = nullptr;
 
 static PowerPolicy s_policy = { 180, 30000 };
 static bool s_touch_wake_guard = false;  // swallow the touch that woke the screen
+
+// Idle dimming: after DIM_AFTER_MS without touch the panel drops to ~10 %; the auto-sleep
+// timeout from Settings then counts from that moment. A touch, wrist raise or PWR restores it.
+#define DIM_AFTER_MS (30 * 1000)
+#define DIM_BRIGHTNESS 26  // ~10 % of 255
+#define IMU_POLL_MS 50     // accelerometer runs at ~21 Hz
+#define IMU_LOG_MS (10 * 1000)
+
+static bool s_dimmed = false;
+static WristGesture s_wrist;
+
+static uint8_t dim_brightness(void) {
+  return s_policy.brightness < DIM_BRIGHTNESS ? s_policy.brightness : DIM_BRIGHTNESS;
+}
+
+static void screen_set_dimmed(bool dimmed) {
+  s_dimmed = dimmed;
+  board_display_set_brightness(dimmed ? dim_brightness() : s_policy.brightness);
+}
+
+// Back to full brightness (and on, if asleep) and restart the idle timer
+static void screen_wake(void) {
+  if (s_dimmed) {
+    screen_set_dimmed(false);  // while asleep this only stores the level used by wake
+  }
+  if (board_display_is_sleeping()) {
+    board_display_wake();
+    lv_obj_invalidate(lv_screen_active());  // frames were not pushed while asleep
+  }
+  lv_display_trigger_activity(NULL);
+}
 
 static uint32_t millis_cb(void) {
   return millis();
@@ -55,11 +87,10 @@ static void touch_read(lv_indev_t *indev, lv_indev_data_t *data) {
   int32_t y = 0;
   bool pressed = board_touch_read(&x, &y);
 
-  if (board_display_is_sleeping()) {
+  // The touch that wakes or brightens the screen is not passed on to the UI
+  if (board_display_is_sleeping() || s_dimmed) {
     if (pressed) {
-      board_display_wake();
-      lv_display_trigger_activity(NULL);
-      lv_obj_invalidate(lv_screen_active());  // frames were not pushed while asleep
+      screen_wake();
       s_touch_wake_guard = true;
     }
     data->state = LV_INDEV_STATE_RELEASED;
@@ -84,32 +115,65 @@ static void touch_read(lv_indev_t *indev, lv_indev_data_t *data) {
 
 void system_apply_settings(void) {
   s_policy = power_policy_compute(g_settings, board_battery());
-  board_display_set_brightness(s_policy.brightness);
+  board_display_set_brightness(s_dimmed ? dim_brightness() : s_policy.brightness);
   audio_set_volume(g_settings.volume);
 
   const TzEntry *tz = tz_find(g_settings.tz_name);
   board_time_apply_tz(tz ? tz->posix : "UTC0");
 }
 
-// Auto-sleep, PWR key and periodic power-policy refresh
+// Raise-to-view: only sampled while the screen is dimmed or asleep
+static void wrist_tick(void) {
+  static uint32_t last_poll_ms = 0;
+  static uint32_t last_log_ms = 0;
+  bool asleep = board_display_is_sleeping();
+  if (!asleep && !s_dimmed) {
+    wrist_gesture_reset(&s_wrist);
+    return;
+  }
+  if (millis() - last_poll_ms < IMU_POLL_MS) {
+    return;
+  }
+  last_poll_ms = millis();
+
+  float x = 0.0f;
+  float y = 0.0f;
+  float z = 0.0f;
+  if (!board_imu_read_accel(&x, &y, &z)) {
+    return;
+  }
+  if (millis() - last_log_ms > IMU_LOG_MS) {
+    last_log_ms = millis();
+    USBSerial.printf("IMU accel x=%.2f y=%.2f z=%.2f\n", x, y, z);
+  }
+  if (wrist_gesture_update(&s_wrist, x, y, z, millis())) {
+    USBSerial.printf("Wrist raise (x=%.2f y=%.2f z=%.2f)\n", x, y, z);
+    screen_wake();
+    if (asleep) {
+      launcher_go_home();  // raised to check the time
+    }
+  }
+}
+
+// Idle dim, auto-sleep, PWR key and periodic power-policy refresh
 static void power_tick(void) {
   static uint32_t last_policy_ms = 0;
   if (millis() - last_policy_ms > 5000) {
     last_policy_ms = millis();
     PowerPolicy policy = power_policy_compute(g_settings, board_battery());
-    if (policy.brightness != s_policy.brightness) {
-      board_display_set_brightness(policy.brightness);
-    }
+    bool changed = policy.brightness != s_policy.brightness;
     s_policy = policy;
+    if (changed) {
+      board_display_set_brightness(s_dimmed ? dim_brightness() : s_policy.brightness);
+    }
   }
 
-  // PWR short press: wake up / back to the watch face; on the watch face it turns the screen off
+  // PWR short press: wake up / brighten / back to the watch face; on a bright watch face it
+  // turns the screen off
   if (board_power_key_pressed()) {
-    if (board_display_is_sleeping()) {
-      board_display_wake();
+    if (board_display_is_sleeping() || s_dimmed) {
+      screen_wake();
       launcher_go_home();
-      lv_display_trigger_activity(NULL);
-      lv_obj_invalidate(lv_screen_active());
     } else if (launcher_go_home()) {
       lv_display_trigger_activity(NULL);
     } else {
@@ -118,8 +182,18 @@ static void power_tick(void) {
     return;
   }
 
-  if (!board_display_is_sleeping() && s_policy.sleep_timeout_ms > 0 &&
-      lv_display_get_inactive_time(NULL) > s_policy.sleep_timeout_ms) {
+  wrist_tick();
+
+  if (board_display_is_sleeping()) {
+    return;
+  }
+  uint32_t inactive_ms = lv_display_get_inactive_time(NULL);
+  if (!s_dimmed && inactive_ms > DIM_AFTER_MS) {
+    screen_set_dimmed(true);
+  } else if (s_dimmed && inactive_ms < DIM_AFTER_MS) {
+    screen_set_dimmed(false);  // activity from elsewhere, e.g. launcher_go_home()
+  }
+  if (s_policy.sleep_timeout_ms > 0 && inactive_ms > DIM_AFTER_MS + s_policy.sleep_timeout_ms) {
     board_display_sleep();
   }
 }
@@ -169,6 +243,9 @@ void system_setup(void) {
   if (!board_pmu_begin()) {
     USBSerial.println("AXP2101 init failed");
   }
+  if (!board_imu_begin()) {
+    USBSerial.println("QMI8658 init failed (no raise-to-view)");
+  }
   if (!board_rtc_begin()) {
     USBSerial.println("PCF85063 init failed");
   }
@@ -184,6 +261,7 @@ void system_setup(void) {
     return;
   }
 
+  wrist_gesture_reset(&s_wrist);
   ui_theme_apply(g_settings.dark_theme);
   launcher_install(&APP_AI_VOICE);
   launcher_install(&APP_SETTINGS);

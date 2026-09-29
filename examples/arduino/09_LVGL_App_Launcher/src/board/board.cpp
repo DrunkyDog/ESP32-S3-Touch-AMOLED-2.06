@@ -4,6 +4,7 @@
 #include "Arduino_GFX_Library.h"
 #include "Arduino_DriveBus_Library.h"
 #include "SensorPCF85063.hpp"
+#include "SensorQMI8658.hpp"
 #include "XPowersLib.h"
 #include "../board/board.h"
 
@@ -24,11 +25,13 @@ static std::unique_ptr<Arduino_IIC> FT3168(new Arduino_FT3x68(IIC_Bus, FT3168_DE
 
 static SensorPCF85063 rtc;
 static XPowersPMU pmu;
+static SensorQMI8658 imu;
 
 static bool s_sleeping = false;
 static uint8_t s_brightness = 180;
 static bool s_rtc_ok = false;
 static bool s_pmu_ok = false;
+static bool s_imu_ok = false;
 
 static void touch_interrupt(void) {
   FT3168->IIC_Interrupt_Flag = true;
@@ -150,6 +153,28 @@ bool board_power_key_pressed(void) {
   bool pressed = pmu.isPekeyShortPressIrq();
   pmu.clearIrqStatus();
   return pressed;
+}
+
+/* ---------------- IMU ---------------- */
+
+bool board_imu_begin(void) {
+  s_imu_ok = imu.begin(Wire, QMI8658_L_SLAVE_ADDRESS, IIC_SDA, IIC_SCL);
+  if (!s_imu_ok) {
+    return false;
+  }
+  // Low-power accelerometer mode needs the gyroscope disabled
+  imu.disableGyroscope();
+  imu.configAccelerometer(SensorQMI8658::ACC_RANGE_4G, SensorQMI8658::ACC_ODR_LOWPOWER_21Hz,
+                          SensorQMI8658::LPF_MODE_0);
+  imu.enableAccelerometer();
+  return true;
+}
+
+bool board_imu_read_accel(float *x, float *y, float *z) {
+  if (!s_imu_ok || !imu.getDataReady()) {
+    return false;
+  }
+  return imu.getAccelerometer(*x, *y, *z);
 }
 
 /* ---------------- RTC / time ---------------- */

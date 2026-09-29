@@ -5,7 +5,7 @@
 // Firmware (app image) version. Every code module is linked into this one image, so a
 // firmware OTA replaces all modules together; the per-module versions below tell which
 // modules actually changed between two firmware releases.
-#define FIRMWARE_VERSION "1.3.2"
+#define FIRMWARE_VERSION "1.3.3"
 #define FIRMWARE_BOARD_ID "ESP32-S3-Touch-AMOLED-2.06"
 
 struct ModuleInfo {

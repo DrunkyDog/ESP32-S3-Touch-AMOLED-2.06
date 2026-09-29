@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 
-// Board module: display, touch, PMU and RTC. Audio lives in src/audio.
+// Board module: display, touch, PMU, RTC and IMU. Audio lives in src/audio.
 
 struct BatteryInfo {
   bool present;
@@ -29,6 +29,11 @@ bool board_pmu_begin(void);
 BatteryInfo board_battery(void);
 // Returns true once per short press of the PWR key.
 bool board_power_key_pressed(void);
+
+// QMI8658 accelerometer only (gyro off), low-power ~21 Hz
+bool board_imu_begin(void);
+// Latest acceleration in g (sensor axes). Returns false when the IMU is missing or has no new data.
+bool board_imu_read_accel(float *x, float *y, float *z);
 
 bool board_rtc_begin(void);
 // RTC stores UTC. Copies RTC -> system clock when the RTC holds a sane date.

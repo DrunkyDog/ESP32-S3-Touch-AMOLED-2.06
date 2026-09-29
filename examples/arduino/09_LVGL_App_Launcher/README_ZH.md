@@ -7,6 +7,7 @@
 - 第 1 页：表盘（RTC/NTP 时间、电池、Wi-Fi、位置）
 - 第 2 页：应用 —— AI 语音（启动 voice0/voice1 中的 xiaozhi-esp32 固件）与设置
 - 设置：显示、声音、时区与位置、电池、Wi-Fi、软件更新（OTA）
+- 空闲调暗：30 秒无触摸后屏幕降至约 10% 亮度，设置中的休眠时间从此时开始计算；触摸、PWR 或抬腕（QMI8658 加速度计）恢复亮度，抬腕也会唤醒熄屏并回到表盘
 
 ## 模块结构
 
@@ -15,7 +16,7 @@
 | 模块 | 文件夹 | 职责 | 数据分区 |
 | --- | --- | --- | --- |
 | Core | `src/core` | 启动、LVGL 移植、设置（NVS）、电源策略、OTA 引擎、模块注册表 | `nvs` |
-| Board | `src/board` | CO5300 屏幕、FT3168 触摸、AXP2101 电源、PCF85063 RTC | `board` |
+| Board | `src/board` | CO5300 屏幕、FT3168 触摸、AXP2101 电源、PCF85063 RTC、QMI8658 IMU | `board` |
 | Audio | `src/audio` | ES8311 编解码器与 I2S | `audio` |
 | Protocol | `src/protocol` | Wi-Fi、NTP、HTTPS 传输 | `protocol` |
 | Server | `src/server` | OTA 服务器地址与清单格式 | `server` |

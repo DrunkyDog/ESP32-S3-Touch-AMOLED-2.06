@@ -7,6 +7,7 @@ Watch-style launcher modelled on the ESP-Brookesia phone `AppLauncher`, built wi
 - Page 1: watch face (time from RTC/NTP, battery, Wi-Fi, location)
 - Page 2: apps — AI Voice (starts the xiaozhi-esp32 firmware in voice0/voice1) and Settings
 - Settings: Display, Sound, Time & Location, Battery, Wi-Fi, Software Update (OTA)
+- Idle dim: after 30 s without a touch the screen drops to ~10 % brightness; the Settings sleep timeout then counts from that moment. A touch, PWR or raising the wrist (QMI8658 accelerometer) restores it; a raise also wakes a sleeping screen to the watch face
 
 ## Module layout
 
@@ -15,7 +16,7 @@ Each module lives in its own folder under `src/` and carries its own version in 
 | Module | Folder | Responsibility | Data partition |
 | --- | --- | --- | --- |
 | Core | `src/core` | Boot, LVGL port, settings (NVS), power policy, OTA engine, module registry | `nvs` |
-| Board | `src/board` | CO5300 display, FT3168 touch, AXP2101 PMU, PCF85063 RTC | `board` |
+| Board | `src/board` | CO5300 display, FT3168 touch, AXP2101 PMU, PCF85063 RTC, QMI8658 IMU | `board` |
 | Audio | `src/audio` | ES8311 codec and I2S | `audio` |
 | Protocol | `src/protocol` | Wi-Fi, NTP, HTTPS transport | `protocol` |
 | Server | `src/server` | OTA server URL and manifest contract | `server` |
